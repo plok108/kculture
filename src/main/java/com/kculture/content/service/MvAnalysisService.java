@@ -21,7 +21,9 @@ public class MvAnalysisService {
     // 곡에 대한 분석 작업을 생성한다. 실패하지 않은 최신 작업이 있으면 재사용한다.
     @Transactional
     public AnalysisResponse createAnalysis(Long songId, String modelName) {
-        Song song = songRepository.findById(songId)
+        // Song 행을 잠근 채로 "재사용 가능한 분석 있는지 확인 → 없으면 생성"을 수행해서
+        // 동시 요청이 같은 곡에 대해 중복 분석을 만들지 못하도록 직렬화한다.
+        Song song = songRepository.findByIdForUpdate(songId)
                 .orElseThrow(() -> new ContentNotFoundException("곡을 찾을 수 없습니다."));
 
         if (modelName == null || modelName.isBlank()) {
@@ -100,7 +102,9 @@ public class MvAnalysisService {
     // started=true인 경우에만 호출 측(컨트롤러)이 비동기 러너를 트리거한다.
     @Transactional
     public RunResult createAndStart(Long songId, String modelName) {
-        Song song = songRepository.findById(songId)
+        // Song 행을 잠근 채로 "재사용 가능한 분석 있는지 확인 → 없으면 생성"을 수행해서
+        // 동시 요청이 같은 곡에 대해 중복 분석(+중복 Gemini 호출)을 만들지 못하도록 직렬화한다.
+        Song song = songRepository.findByIdForUpdate(songId)
                 .orElseThrow(() -> new ContentNotFoundException("곡을 찾을 수 없습니다."));
         if (modelName == null || modelName.isBlank()) {
             throw new IllegalArgumentException("모델 이름을 입력하세요.");

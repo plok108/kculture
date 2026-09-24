@@ -43,9 +43,15 @@ public class YoutubeDataClient {
         JsonNode snippet = item.path("snippet");
         JsonNode status = item.path("status");
 
+        String title = snippet.path("title").asText(null);
+        String channelTitle = snippet.path("channelTitle").asText(null);
+        if (title == null || title.isBlank() || channelTitle == null || channelTitle.isBlank()) {
+            throw new IllegalArgumentException("유튜브 메타데이터에 제목/채널명이 없습니다: " + videoId);
+        }
+
         return new YoutubeVideoInfo(
-                snippet.path("title").asText(null),
-                snippet.path("channelTitle").asText(null),
+                title,
+                channelTitle,
                 snippet.path("thumbnails").path("high").path("url").asText(null),
                 status.path("privacyStatus").asText(null),
                 status.path("embeddable").asBoolean(false)

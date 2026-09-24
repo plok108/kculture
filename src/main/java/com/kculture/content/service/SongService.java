@@ -7,6 +7,7 @@ import com.kculture.content.dto.SongResponse;
 import com.kculture.content.exception.ContentNotFoundException;
 import com.kculture.content.repository.SongRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -70,13 +71,20 @@ public class SongService {
                 .map(this::toResponse)                       // 이미 있으면 재사용
                 .orElseGet(() -> {
                     YoutubeVideoInfo info = youtubeDataClient.fetch(videoId);
-                    Song saved = songRepository.save(new Song(
-                            info.title(),
-                            info.channelTitle(),             // 채널명을 아티스트로 사용
-                            videoId,
-                            info.thumbnailUrl()
-                    ));
-                    return toResponse(saved);
+                    try {
+                        Song saved = songRepository.save(new Song(
+                                info.title(),
+                                info.channelTitle(),             // 채널명을 아티스트로 사용
+                                videoId,
+                                info.thumbnailUrl()
+                        ));
+                        return toResponse(saved);
+                    } catch (DataIntegrityViolationException e) {
+                        // 동시 요청이 같은 videoId를 먼저 등록한 경우 — 그 곡을 그대로 재사용한다.
+                        return songRepository.findByYoutubeVideoId(videoId)
+                                .map(this::toResponse)
+                                .orElseThrow(() -> e);
+                    }
                 });
     }
 

@@ -1,5 +1,6 @@
 package com.kculture.recommendation.controller;
 
+import com.kculture.common.auth.CurrentUserId;
 import com.kculture.recommendation.dto.CreateSessionRequest;
 import com.kculture.recommendation.dto.MatchResponse;
 import com.kculture.recommendation.dto.SessionPlaceResponse;
@@ -40,15 +41,16 @@ public class RecommendationController {
 
     // 추천 장소 노출 시점 기록
     @PatchMapping("/session-places/{id}/shown")
-    public SessionPlaceResponse markShown(@PathVariable Long id) {
-        return recommendationService.markShown(id);
+    public SessionPlaceResponse markShown(@PathVariable Long id, @CurrentUserId Long userId) {
+        return recommendationService.markShown(id, userId);
     }
 
     // 코스에 담기/빼기
     @PatchMapping("/session-places/{id}/choose")
     public SessionPlaceResponse choose(@PathVariable Long id,
-                                       @RequestParam(defaultValue = "true") boolean chosen) {
-        return recommendationService.choosePlace(id, chosen);
+                                       @RequestParam(defaultValue = "true") boolean chosen,
+                                       @CurrentUserId Long userId) {
+        return recommendationService.choosePlace(id, chosen, userId);
     }
 
     // 요소별 추천 장소 목록

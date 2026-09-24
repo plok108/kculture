@@ -9,6 +9,7 @@ import com.kculture.travel.repository.PlaceRepository;
 import com.kculture.recommendation.domain.*;
 import com.kculture.recommendation.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
@@ -85,7 +86,16 @@ public class QuestService {
     public QuestResponse createQuestFromSession(QuestFromSessionRequest request) {
         return questRepository.findBySessionId(request.sessionId())
                 .map(QuestResponse::from)
-                .orElseGet(() -> createNewQuestFromSession(request));
+                .orElseGet(() -> {
+                    try {
+                        return createNewQuestFromSession(request);
+                    } catch (DataIntegrityViolationException e) {
+                        // 동시 요청이 같은 세션으로 먼저 퀘스트를 만든 경우 — 그 퀘스트를 그대로 반환한다.
+                        return questRepository.findBySessionId(request.sessionId())
+                                .map(QuestResponse::from)
+                                .orElseThrow(() -> e);
+                    }
+                });
     }
 
     private QuestResponse createNewQuestFromSession(QuestFromSessionRequest request) {

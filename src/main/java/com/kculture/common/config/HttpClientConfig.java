@@ -27,4 +27,20 @@ public class HttpClientConfig {
                 .baseUrl("https://www.googleapis.com/youtube/v3")
                 .build();
     }
+
+    // 카카오 로그인 액세스 토큰 검증(사용자 정보 조회) 전용
+    @Bean
+    public RestClient kakaoRestClient() {
+        return RestClient.builder()
+                .baseUrl("https://kapi.kakao.com")
+                .build();
+    }
+
+    // 구글 로그인 액세스 토큰 검증(사용자 정보 조회) 전용
+    @Bean
+    public RestClient googleRestClient() {
+        return RestClient.builder()
+                .baseUrl("https://www.googleapis.com")
+                .build();
+    }
 }
