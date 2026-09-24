@@ -1,8 +1,8 @@
 package com.kculture.user.controller;
 
 import com.kculture.user.dto.LoginRequest;
+import com.kculture.user.dto.LoginResponse;
 import com.kculture.user.dto.SocialLoginRequest;
-import com.kculture.user.dto.UserResponse;
 import com.kculture.user.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -20,13 +20,13 @@ public class AuthController {
 
     // 이메일 로그인
     @PostMapping("/login")
-    public UserResponse login(@Valid @RequestBody LoginRequest request) {
+    public LoginResponse login(@Valid @RequestBody LoginRequest request) {
         return userService.login(request);
     }
 
     // 소셜 로그인 (프론트 OAuth 후 provider/uid 전달)
     @PostMapping("/social")
-    public UserResponse socialLogin(@Valid @RequestBody SocialLoginRequest request) {
+    public LoginResponse socialLogin(@Valid @RequestBody SocialLoginRequest request) {
         return userService.socialLogin(request);
     }
 }

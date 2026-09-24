@@ -122,18 +122,29 @@ public class RecommendationService {
 
     // S04 노출 시점 기록
     @Transactional
-    public SessionPlaceResponse markShown(Long sessionPlaceId) {
+    public SessionPlaceResponse markShown(Long sessionPlaceId, Long userId) {
         SessionPlace sp = findSessionPlaceOrThrow(sessionPlaceId);
+        checkOwnership(sp, userId);
         sp.markShownNow();
         return toResponse(sp);
     }
 
     // 코스에 담기/빼기
     @Transactional
-    public SessionPlaceResponse choosePlace(Long sessionPlaceId, boolean chosen) {
+    public SessionPlaceResponse choosePlace(Long sessionPlaceId, boolean chosen, Long userId) {
         SessionPlace sp = findSessionPlaceOrThrow(sessionPlaceId);
+        checkOwnership(sp, userId);
         sp.markChosen(chosen);
         return toResponse(sp);
+    }
+
+    // 세션에 소유자(회원)가 있는 경우에만 요청자와 일치하는지 검증한다.
+    // 비회원(게스트) 세션은 소유자가 없으므로 검사를 건너뛴다.
+    private void checkOwnership(SessionPlace sp, Long userId) {
+        User owner = sp.getSession().getUser();
+        if (owner != null && !owner.getId().equals(userId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "본인의 추천 세션만 수정할 수 있습니다.");
+        }
     }
 
     // 세션 상태 전환 (CONVERTED / EXPIRED 등)
@@ -168,7 +179,7 @@ public class RecommendationService {
         String reason = null;
         if (sp.getElement() != null) {
             reason = elementPlaceMatchRepository
-                    .findByElement_IdAndPlace_Id(sp.getElement().getId(), sp.getPlace().getId())
+                    .findFirstByElement_IdAndPlace_IdOrderByMatchScoreDesc(sp.getElement().getId(), sp.getPlace().getId())
                     .map(ElementPlaceMatch::getReason)
                     .orElse(null);
         }
